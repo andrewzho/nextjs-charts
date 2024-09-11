@@ -1,101 +1,148 @@
-import Image from "next/image";
+"use client";  // Add this line at the very top
 
-export default function Home() {
+import React, { useEffect, useState } from 'react';
+import { Bar, Pie, Line } from 'react-chartjs-2';
+import { Chart, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, TimeScale } from 'chart.js';
+import { CandlestickController, OhlcElement } from 'chartjs-chart-financial';
+import axios from 'axios';
+
+// Register Chart.js components, including the candlestick chart components
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  OhlcElement,  // Register OhlcElement for candlestick charts
+  CandlestickController,  // Register CandlestickController
+  TimeScale  // Register time scale for x-axis
+);
+
+const Dashboard = () => {
+  const [lineData, setLineData] = useState({
+    labels: [],
+    datasets: [{ label: 'Line Data', data: [], borderColor: 'blue', backgroundColor: 'lightblue' }]
+  });
+  const [barData, setBarData] = useState({
+    labels: [],
+    datasets: [{
+      label: 'Bar Data',
+      data: [],
+      backgroundColor: ['lightblue', 'lightcoral', 'lightyellow'],
+      borderColor: ['blue', 'red', 'yellow'],
+      borderWidth: 1
+    }]
+  });
+  const [pieData, setPieData] = useState({
+    labels: [],
+    datasets: [{
+      data: [],
+      backgroundColor: ['pink', 'skyblue', 'yellow', 'lightgreen'],
+      borderColor: ['red', 'blue', 'yellow', 'green'],
+      borderWidth: 1
+    }]
+  });
+
+  const [candlestickData, setCandlestickData] = useState({
+    datasets: [{
+      label: 'Candlestick Data',
+      data: []
+    }]
+  });
+
+  useEffect(() => {
+    // Fetch Line Chart Data
+    axios.get('http://127.0.0.1:8000/api/line-chart-data/')
+      .then(res => setLineData({
+        labels: res.data.labels || [],
+        datasets: [{
+          label: 'Line Data',
+          data: res.data.data || [],
+          borderColor: 'blue',
+          backgroundColor: 'lightblue'
+        }]
+      }));
+
+    // Fetch Bar Chart Data
+    axios.get('http://127.0.0.1:8000/api/bar-chart-data/')
+      .then(res => setBarData({
+        labels: res.data.labels || [],
+        datasets: [{
+          label: 'Bar Data',
+          data: res.data.data || [],
+          backgroundColor: ['lightblue', 'lightcoral', 'lightyellow'],
+          borderColor: ['blue', 'red', 'yellow'],
+          borderWidth: 1
+        }]
+      }));
+
+    // Fetch Pie Chart Data
+    axios.get('http://127.0.0.1:8000/api/pie-chart-data/')
+      .then(res => setPieData({
+        labels: res.data.labels || [],
+        datasets: [{
+          data: res.data.data || [],
+          backgroundColor: ['pink', 'skyblue', 'yellow', 'lightgreen'],
+          borderColor: ['red', 'blue', 'yellow', 'green'],
+          borderWidth: 1
+        }]
+      }));
+
+    // Fetch Candlestick Data
+    axios.get('http://127.0.0.1:8000/api/candlestick-data/')
+      .then(res => {
+        const candlestickFormattedData = res.data.data.map(item => ({
+          x: new Date(item.x),  // Convert x to a Date object
+          o: item.open,  // Open
+          h: item.high,  // High
+          l: item.low,  // Low
+          c: item.close  // Close
+        }));
+
+        setCandlestickData({
+          datasets: [{
+            label: 'Candlestick Data',
+            data: candlestickFormattedData,
+            borderColor: 'black',
+            backgroundColor: 'green'
+          }]
+        });
+      })
+      .catch(err => console.log("Error fetching candlestick data: ", err));
+  }, []);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-white p-6">
+      <h1 className="text-4xl font-bold text-center text-blue-700 mb-8">Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <div className="bg-gray-100 shadow-md rounded-lg p-6">
+          <h2 className="text-2xl font-semibold text-center text-gray-800 mb-4">Line Chart</h2>
+          <Line data={lineData} />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="bg-gray-100 shadow-md rounded-lg p-6">
+          <h2 className="text-2xl font-semibold text-center text-gray-800 mb-4">Bar Chart</h2>
+          <Bar data={barData} />
+        </div>
+
+        <div className="bg-gray-100 shadow-md rounded-lg p-6">
+          <h2 className="text-2xl font-semibold text-center text-gray-800 mb-4">Pie Chart</h2>
+          <Pie data={pieData} />
+        </div>
+
+        <div className="bg-gray-100 shadow-md rounded-lg p-6">
+          <h2 className="text-2xl font-semibold text-center text-gray-800 mb-4">Candlestick Chart</h2>
+          <canvas id="candlestickChart"></canvas>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default Dashboard;
